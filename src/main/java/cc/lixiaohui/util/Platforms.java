@@ -10,7 +10,7 @@ import java.net.NetworkInterface;
 import sun.management.VMManagement;
 
 @SuppressWarnings("restriction")
-public class PlatformUtils {
+public class Platforms {
 
 	/**
 	 * 获取localhost MAC地址

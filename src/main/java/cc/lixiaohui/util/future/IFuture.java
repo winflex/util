@@ -1,6 +1,7 @@
 package cc.lixiaohui.util.future;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -102,6 +103,15 @@ public interface IFuture<V> extends Future<V> {
      * completed, the specified listener is notified immediately.
      */
 	IFuture<V> addListener(IFutureListener<V> l);
+	
+	/**
+     * Adds the specified listener to this future.  The
+     * specified listener is notified when this future is
+     * {@linkplain #isDone() done}.  If this future is already
+     * completed, the specified listener is notified immediately.
+     * @param executor The executor which will be used to run {@link IFutureListener#operationCompleted(IFuture)}
+     */
+	IFuture<V> addListener(IFutureListener<V> l, Executor executor);
 	
 	/**
      * Removes the specified listener from this future.

@@ -8,7 +8,7 @@ package cc.lixiaohui.util;
  * @date 2016年10月12日 上午11:21:09
  * 
  */
-public class RandomUtils {
+public class Randoms {
 	
 	private static final char ASCII_A = 65;
 	private static final char ASCII_Z = 90;

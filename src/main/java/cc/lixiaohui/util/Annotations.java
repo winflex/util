@@ -22,7 +22,7 @@ import java.util.jar.JarFile;
  * @author lixiaohui
  * @date 2016年11月13日 下午11:52:23
  */
-public class AnnotationUtils {
+public class Annotations {
 	
 	private static final String CLASS_FILE_SUFFIX = "class";
 	

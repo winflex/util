@@ -8,7 +8,7 @@ import java.io.PrintStream;
  * @date 2016年10月13日 下午2:26:36
  * 
  */
-public class ExceptionUtils {
+public class Exceptions {
 	
 	public static String toDetail(Throwable e) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
