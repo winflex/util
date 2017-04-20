@@ -9,7 +9,7 @@ package cc.lixiaohui.util.algorithm.sort;
  * @date 2017年2月22日 下午12:45:16
  */
 public class BubbleSort {
-	
+    
 	public static final void sort(int[] array, int left, int right) {
 		if (left > right) {
 			throw new IllegalArgumentException("left > right");

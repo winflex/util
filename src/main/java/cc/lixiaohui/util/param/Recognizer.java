@@ -6,7 +6,7 @@ package cc.lixiaohui.util.param;
  * @date 2017年4月19日 下午5:54:11
  * @version 1.0
  */
-public interface Recognizer {
+interface Recognizer {
     
     /**
      * reconized by '?'
@@ -17,6 +17,8 @@ public interface Recognizer {
      * reconized by ':'
      */
     void namedParameter(String name, int position);
+    
+    void escape(int position);
 
-    void other(char character);
+    void other(int position);
 }

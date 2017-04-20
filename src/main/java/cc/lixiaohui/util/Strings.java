@@ -1,4 +1,4 @@
-package cc.lixiaohui.util.param;
+package cc.lixiaohui.util;
 
 /**
  *
@@ -9,10 +9,10 @@ package cc.lixiaohui.util.param;
 public class Strings {
 
     private static final String ALL_SEPERATOR = " \n\r\f\t,()=<>&|+-=/*'^![]#~\\";
-    public static final char[] SEPERATORS = new char[ALL_SEPERATOR.length()];
+    public static final char[] SEPERATE_CHARS = new char[ALL_SEPERATOR.length()];
     static {
         for (int i = 0; i < ALL_SEPERATOR.length(); i++) {
-            SEPERATORS[i] = ALL_SEPERATOR.charAt(i);
+            SEPERATE_CHARS[i] = ALL_SEPERATOR.charAt(i);
         }
     }
     
@@ -33,6 +33,6 @@ public class Strings {
 
     public static void main(String[] args) {
         String s = "adsa a";
-        System.out.println(firstIndexOfAnyChar(s, SEPERATORS, 0));
+        System.out.println(firstIndexOfAnyChar(s, SEPERATE_CHARS, 0));
     }
 }

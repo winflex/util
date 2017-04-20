@@ -1,14 +1,14 @@
 package cc.lixiaohui.util.param;
 
 /**
- *
+ * 下标参数描述
  *
  * @author lixiaohui
  * @date 2017年4月19日 下午6:14:20
  * @version 1.0
  *
  */
-public class OrdinalParameterDescriptor {
+class OrdinalParameterDescriptor {
     
     private final int ordinalPosition;
     
