@@ -27,13 +27,14 @@ public class SpinLock implements Lock {
     
     @Override
     public void lock() {
+        final AtomicReference<Thread> owner = this.owner;
+
         final Thread current = Thread.currentThread();
         if (owner.get() == current) {
             ++holdCount;
             return;
         }
         
-        final AtomicReference<Thread> owner = this.owner;
         while (!owner.compareAndSet(null, current)) {
         }
 
@@ -42,13 +43,14 @@ public class SpinLock implements Lock {
 
     @Override
     public void lockInterruptibly() throws InterruptedException {
+        final AtomicReference<Thread> owner = this.owner;
+        
         final Thread current = Thread.currentThread();
         if (owner.get() == current) {
             ++holdCount;
             return;
         }
         
-        final AtomicReference<Thread> owner = this.owner;
         while (!owner.compareAndSet(null, current)) {
             if (current.isInterrupted()) {
                 current.interrupt();
@@ -61,18 +63,22 @@ public class SpinLock implements Lock {
 
     @Override
     public boolean tryLock() {
-        return owner.compareAndSet(null, Thread.currentThread());
+        boolean locked =  owner.compareAndSet(null, Thread.currentThread());
+        if (locked) {
+            holdCount = 1;
+        }
+        return locked;
     }
 
     @Override
     public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+        final AtomicReference<Thread> owner = this.owner;
         final Thread current = Thread.currentThread();
         if (owner.get() == current) {
             ++holdCount;
             return true;
         }
         
-        final AtomicReference<Thread> owner = this.owner;
         final long start = System.nanoTime();
         final long timeoutNanos = unit.toNanos(time);
         while (!owner.compareAndSet(null, current)) {
@@ -93,6 +99,7 @@ public class SpinLock implements Lock {
 
     @Override
     public void unlock() {
+        final AtomicReference<Thread> owner = this.owner;
         final Thread current = Thread.currentThread();
         
         if (owner.get() != current) {
