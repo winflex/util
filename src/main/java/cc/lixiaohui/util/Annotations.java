@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -118,9 +117,9 @@ public class Annotations {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Set<Class<?>> classes = findAnnotatedClasses("io.netty", Target.class);
-		for (Class<?> c : classes) {
-			System.out.println(c.getName());
+		URL[] urls = ClasspathUrlFinder.findClassPaths();
+		for (URL url : urls) {
+		    System.out.println(url);
 		}
 	}
 }
