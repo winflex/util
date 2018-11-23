@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * <pre>
- * 正常结束时, 若执行的结果不为null, 则result为执行结果; 若执行结果为null, 则result = {@link AbstractFuture#SUCCESS_SIGNAL}
+ * 正常结束时, 若执行的结果不为null, 则result为执行结果; 若执行结果为null, 则result = {@link DefaultFuture#SUCCESS_SIGNAL}
  * 异常结束时, result为 {@link CauseHolder} 的实例;若是被取消而导致的异常结束, 则result为 {@link CancellationException} 的实例, 否则为其它异常的实例
  * 以下情况会使异步操作由未完成状态转至已完成状态, 也就是在以下情况发生时调用notifyAll()方法:
  * <ul>
@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
  *
  * @param <V> 异步执行结果的类型
  */
-public class AbstractFuture<V> implements IFuture<V> {
+public class DefaultFuture<V> implements IFuture<V> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractFuture.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
 
     private volatile Object result; // 异步操作正常结束时
 
@@ -40,7 +40,7 @@ public class AbstractFuture<V> implements IFuture<V> {
     private final ConcurrentMap<IFutureListener<V>, Executor> listen2Executor = new ConcurrentHashMap<>();
 
     /**
-     * 当任务正常执行结果为null时, 即客户端调用{@link AbstractFuture#setSuccess(null)}时,
+     * 当任务正常执行结果为null时, 即客户端调用{@link DefaultFuture#setSuccess(null)}时,
      * result引用该对象
      */
     private static final SuccessSignal SUCCESS_SIGNAL = new SuccessSignal();
@@ -294,7 +294,7 @@ public class AbstractFuture<V> implements IFuture<V> {
         }
     }
 
-    protected IFuture<V> setFailure(Throwable cause) {
+    public IFuture<V> setFailure(Throwable cause) {
         if (setFailure0(cause)) {
             notifyListeners();
             return this;
@@ -318,7 +318,7 @@ public class AbstractFuture<V> implements IFuture<V> {
         return true;
     }
 
-    protected IFuture<V> setSuccess(Object result) {
+    public IFuture<V> setSuccess(Object result) {
         if (setSuccess0(result)) { // 设置成功后通知监听器
             notifyListeners();
             return this;
@@ -364,7 +364,7 @@ public class AbstractFuture<V> implements IFuture<V> {
                     @Override
                     public void run() {
                         try {
-                            l.operationCompleted(AbstractFuture.this);
+                            l.operationCompleted(DefaultFuture.this);
                         } catch (Exception e) {
                             // swallow the exception
                             logger.warn(e.getMessage(), e);
