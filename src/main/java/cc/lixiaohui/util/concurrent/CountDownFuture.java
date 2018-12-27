@@ -55,16 +55,33 @@ public final class CountDownFuture extends DefaultPromise {
             
             if (n <= 0) {
                 this.count = 0;
-                setSuccess(null);
+                super.setSuccess(null);
             } else {
                 final int count = this.count - n;
                 if (count > 0) {
                     this.count = count;
                 } else {
                     this.count = 0;
-                    setSuccess(null);
+                    super.setSuccess(null);
                 }
             }
         }
+    }
+    
+    public static void main(String[] args) {
+        final CountDownFuture future = new CountDownFuture(3);
+        
+        future.addListener(new IFutureListener() {
+            
+            @Override
+            public void operationCompleted(IFuture f) throws Exception {
+                System.out.println(future.getCount());
+            }
+        });
+        
+        future.countDown(1);
+        future.countDown(1);
+        future.countDown(1);
+        future.countDown(1);
     }
 }
