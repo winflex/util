@@ -20,7 +20,7 @@ public interface IFuture extends Future<Object> {
 
     IFuture addListener(IFutureListener listener);
     
-    IFuture addListener(Executor executor, IFutureListener listener);
+    IFuture addListener(IFutureListener listener, Executor executor);
 
     IFuture removeListener(IFutureListener listener);
 

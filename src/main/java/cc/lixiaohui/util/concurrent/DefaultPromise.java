@@ -161,11 +161,11 @@ public class DefaultPromise implements IPromise, Serializable {
 
     @Override
     public IFuture addListener(IFutureListener listener) {
-        return addListener(defaultExecutor, listener);
+        return addListener(listener, defaultExecutor);
     }
 
     @Override
-    public IFuture addListener(Executor executor, IFutureListener listener) {
+    public IFuture addListener(IFutureListener listener, Executor executor) {
         Objects.requireNonNull(listener, "listener");
         Objects.requireNonNull(executor, "executor");
         
@@ -351,7 +351,7 @@ public class DefaultPromise implements IPromise, Serializable {
             try {
                 listener.operationCompleted(this);
             } catch (Throwable t) {
-                logger.warn(t.getMessage(), t);
+                logger.error(t.getMessage(), t);
             }
         } else {
             executor.execute(new Runnable() {
@@ -361,7 +361,7 @@ public class DefaultPromise implements IPromise, Serializable {
                     try {
                         listener.operationCompleted(DefaultPromise.this);
                     } catch (Throwable t) {
-                        logger.warn(t.getMessage(), t);
+                        logger.error(t.getMessage(), t);
                     }
                 }
             });
@@ -372,7 +372,6 @@ public class DefaultPromise implements IPromise, Serializable {
         Map<IFutureListener, Executor> copy;
         synchronized (this) {
             copy = new HashMap<>(listeners);
-            listeners.clear();
         }
         
         for (Entry<IFutureListener, Executor> entry : copy.entrySet()) {
@@ -380,6 +379,14 @@ public class DefaultPromise implements IPromise, Serializable {
         }
     }
 
+    protected final Executor defaultExecutor() {
+        return this.defaultExecutor;
+    }
+    
+    protected final Map<IFutureListener, Executor> listeners() {
+        return this.listeners;
+    }
+    
     private static final class CauseHolder implements Serializable {
 
         private static final long serialVersionUID = 8712728693792003462L;
