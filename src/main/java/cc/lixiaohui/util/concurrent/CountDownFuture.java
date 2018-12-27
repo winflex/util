@@ -2,7 +2,7 @@ package cc.lixiaohui.util.concurrent;
 
 
 /**
- * 类似于{@link CountDownLatch}, 但{@link CountDownFuture}可以添加完成监听器
+ * 类似于{@link java.util.concurrent.CountDownLatch}, 但{@link CountDownFuture}可以添加完成监听器
  *
  *
  * @author lixiaohui
@@ -21,25 +21,49 @@ public final class CountDownFuture extends DefaultPromise {
         }
     }
     
+    @Override
+    public IPromise setSuccess(Object result) {
+        throw new UnsupportedOperationException("Use countDown() instead");
+    }
+    
+    @Override
+    public IPromise setFailure(Throwable cause) {
+        throw new UnsupportedOperationException("Use countDown() instead");
+    }
+    
+    public int getCount() {
+        return this.count;
+    }
+    
     public void countDown() {
         countDown(1);
     }
     
+    /**
+     * if n > 0, then count = count - n
+     * if n <= 0, then count is set to 0.
+     */
     public void countDown(int n) {
         if (isDone()) {
             return;
         }
         
         synchronized (this) {
-            
             if (isDone()) {
                 return;
             }
             
-            final int count = this.count = this.count - n;
-            
-            if (count == 0) {
+            if (n <= 0) {
+                this.count = 0;
                 setSuccess(null);
+            } else {
+                final int count = this.count - n;
+                if (count > 0) {
+                    this.count = count;
+                } else {
+                    this.count = 0;
+                    setSuccess(null);
+                }
             }
         }
     }
