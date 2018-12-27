@@ -7,5 +7,5 @@ package winflex.util.concurrent;
  */
 public interface IProgressiveFutureListener extends IFutureListener {
     
-    void operationProgressived(IProgressiveFuture future, long progress, long total) throws Exception;
+    void operationProgressed(IProgressiveFuture future, long progress, long total) throws Exception;
 }
