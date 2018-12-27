@@ -29,17 +29,16 @@ public class DefaultProgressivePromise extends DefaultPromise implements
 
     @Override
     public IProgressivePromise setProgress(long progress, long total) {
+        if (progress < 0 || total < 0 || progress > total) {
+            throw new IllegalArgumentException(
+                    "progress: " + progress + " (expected: 0 <= progress <= total (" + total + "))");
+        }
+        
         if (isDone()) {
             return this;
         }
         
-        synchronized (this) {
-            if (isDone()) {
-                return this;
-            }
-            
-            notifyProgressiveListeners(progress, total);
-        }
+        notifyProgressiveListeners(progress, total);
         return this;
     }
 
