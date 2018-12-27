@@ -61,7 +61,7 @@ public class DefaultProgressivePromise extends DefaultPromise implements
             long progress, long total) {
         if (e == SynchronousExecutor.INSTANCE) {
             try {
-                l.operationProgressived(this, progress, total);
+                l.operationProgressed(this, progress, total);
             } catch (Exception t) {
                 logger.error(t.getMessage(), t);
             }
@@ -71,7 +71,7 @@ public class DefaultProgressivePromise extends DefaultPromise implements
                 @Override
                 public void run() {
                     try {
-                        l.operationProgressived(DefaultProgressivePromise.this, progress, total);
+                        l.operationProgressed(DefaultProgressivePromise.this, progress, total);
                     } catch (Exception t) {
                         logger.error(t.getMessage(), t);
                     }
