@@ -1,4 +1,4 @@
-package cc.lixiaohui.util.future;
+package cc.lixiaohui.util.concurrent;
 
 
 /**
@@ -8,7 +8,9 @@ package cc.lixiaohui.util.future;
  * @author lixiaohui
  *
  */
-public final class CountDownFuture extends DefaultFuture<Object> {
+public final class CountDownFuture extends DefaultPromise {
+    
+    private static final long serialVersionUID = 8184812105149735481L;
     
     private volatile int count;
     
