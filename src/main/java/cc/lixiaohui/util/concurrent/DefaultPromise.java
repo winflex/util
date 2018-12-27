@@ -346,7 +346,7 @@ public class DefaultPromise implements IPromise, Serializable {
     }
 
     private void notifyListener(IFutureListener listener, Executor executor) {
-        if (executor instanceof SynchronousExecutor) {
+        if (executor == SynchronousExecutor.INSTANCE) {
             // No need to new runnable instance
             try {
                 listener.operationCompleted(this);

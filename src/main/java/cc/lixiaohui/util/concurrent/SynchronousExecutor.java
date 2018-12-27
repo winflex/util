@@ -1,5 +1,6 @@
 package cc.lixiaohui.util.concurrent;
 
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 /**
@@ -11,8 +12,12 @@ public final class SynchronousExecutor implements Executor {
 
     public static final SynchronousExecutor INSTANCE = new SynchronousExecutor();
     
+    private SynchronousExecutor() {
+        // use static instance instead
+    }
+    
     @Override
     public void execute(Runnable command) {
-        command.run();
+        Objects.requireNonNull(command, "command").run();
     }
 }
