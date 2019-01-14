@@ -16,11 +16,6 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/**
- * 注解扫描工具类
- * @author lixiaohui
- * @date 2016年11月13日 下午11:52:23
- */
 public class Annotations {
     
     private static final String CLASS_FILE_SUFFIX = "class";

@@ -3,12 +3,6 @@ package winflex.util;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * 可命名的线程工厂
- * 
- * @author lixiaohui
- * @date 2016年11月8日 下午9:22:14
- */
 public class NamedThreadFactory implements ThreadFactory {
 
 	private String namePrefix;
