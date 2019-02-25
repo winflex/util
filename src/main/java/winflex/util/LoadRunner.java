@@ -13,7 +13,7 @@ public class LoadRunner {
     
     private final Config config;
     private final Worker[] workers;
-    private final Reporter reporter = new Reporter();
+    private final Reporter reporter;
     
     private final CountDownLatch startLatch;
     private final CountDownLatch endLatch;
@@ -22,6 +22,7 @@ public class LoadRunner {
     
     public LoadRunner(Config config) {
         this.config = config;
+        this.reporter = new Reporter();
         this.workers = new Worker[config.threads];
 
         this.startLatch = new CountDownLatch(1);
@@ -87,9 +88,13 @@ public class LoadRunner {
             final long interval = config.reportInterval;
             while (!stopped) {
                 sleepQuietly(interval);
-                long count = successCounter.sum();
-                out.println(count - lastCount);
-                lastCount = count;
+                long successCount = successCounter.sum();
+                long failureCount = failureCounter.sum();
+                long tps = successCount - lastCount;
+                
+                
+                out.printf("tps = %10d, success = %10d, failure = %10d\n", tps, successCount, failureCount);
+                lastCount = successCount;
             }
         }
     }
