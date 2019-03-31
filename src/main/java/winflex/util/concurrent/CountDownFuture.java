@@ -8,27 +8,19 @@ package winflex.util.concurrent;
  * @author lixiaohui
  *
  */
-public final class CountDownFuture extends DefaultPromise {
+public final class CountDownFuture extends DefaultProgressivePromise<Integer> {
     
     private static final long serialVersionUID = 8184812105149735481L;
     
+    private final int expectedCount;
     private volatile int count;
     
     public CountDownFuture(int count) {
+    	this.expectedCount = count;
         this.count = count;
         if (count == 0) {
             setSuccess(null);
         }
-    }
-    
-    @Override
-    public IPromise setSuccess(Object result) {
-        throw new UnsupportedOperationException("Use countDown() instead");
-    }
-    
-    @Override
-    public IPromise setFailure(Throwable cause) {
-        throw new UnsupportedOperationException("Use countDown() instead");
     }
     
     public int getCount() {
@@ -38,8 +30,8 @@ public final class CountDownFuture extends DefaultPromise {
     public void countDown() {
         countDown(1);
     }
-    
-    /**
+
+	/**
      * if n > 0, then count = count - n
      * if n <= 0, then count is set to 0.
      */
@@ -53,6 +45,7 @@ public final class CountDownFuture extends DefaultPromise {
                 return;
             }
             
+            super.setProgress(expectedCount - count + n, expectedCount);
             if (n <= 0) {
                 this.count = 0;
                 super.setSuccess(null);
@@ -68,20 +61,18 @@ public final class CountDownFuture extends DefaultPromise {
         }
     }
     
-    public static void main(String[] args) {
-        final CountDownFuture future = new CountDownFuture(3);
-        
-        future.addListener(new IFutureListener() {
-            
-            @Override
-            public void operationCompleted(IFuture f) throws Exception {
-                System.out.println(future.getCount());
-            }
-        });
-        
-        future.countDown(1);
-        future.countDown(1);
-        future.countDown(1);
-        future.countDown(1);
+    @Override
+    public IPromise<Integer> setSuccess(Object result) {
+        throw new UnsupportedOperationException("Use countDown() instead");
+    }
+    
+    @Override
+    public IPromise<Integer> setFailure(Throwable cause) {
+        throw new UnsupportedOperationException("Use countDown() instead");
+    }
+    
+    @Override
+    public IProgressivePromise<Integer> setProgress(long progress, long total) {
+    	throw new UnsupportedOperationException("Use countDown() instead");
     }
 }

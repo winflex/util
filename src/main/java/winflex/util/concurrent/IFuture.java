@@ -1,40 +1,50 @@
 package winflex.util.concurrent;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * An enhanced {@link Future} that supports callback and attachments
  *
  * @author winflex
  */
-public interface IFuture extends Future<Object> {
+public interface IFuture<V> extends Future<V> {
 
-    Object getNow();
+	V getNow();
 
-    boolean isSuccessful();
+	@Override
+	V get() throws InterruptedException, ExecutionException;
 
-    Throwable cause();
+	@Override
+	V get(long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException;
 
-    IFuture addListener(IFutureListener listener);
-    
-    IFuture addListener(IFutureListener listener, Executor executor);
+	boolean isSuccessful();
 
-    IFuture removeListener(IFutureListener listener);
+	Throwable cause();
 
-    IFuture await() throws InterruptedException;
+	IFuture<V> addListener(IFutureListener<? extends IFuture<V>> listener);
 
-    IFuture awaitUninterruptibly();
+	IFuture<V> addListener(IFutureListener<? extends IFuture<V>> listener,
+			Executor executor);
 
-    boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+	IFuture<V> removeListener(IFutureListener<? extends IFuture<V>> listener);
 
-    boolean awaitUninterruptibly(long timeout, TimeUnit unit);
-    
-    Object getAttachment(String name);
-    
-    Map<String, Object> getAttachments();
+	IFuture<V> await() throws InterruptedException;
 
-    void setAttachment(String name, Object value);
+	IFuture<V> awaitUninterruptibly();
+
+	boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+
+	boolean awaitUninterruptibly(long timeout, TimeUnit unit);
+
+	Object getAttachment(String name);
+
+	Map<String, Object> getAttachments();
+
+	IFuture<V> setAttachment(String name, Object value);
 }

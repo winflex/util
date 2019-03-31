@@ -21,380 +21,393 @@ import org.slf4j.LoggerFactory;
  *
  * @author winflex
  */
-public class DefaultPromise implements IPromise, Serializable {
+public class DefaultPromise<V> implements IPromise<V>, Serializable {
 
-    private static final long serialVersionUID = -6962917401801793701L;
+	private static final long serialVersionUID = -6962917401801793701L;
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultPromise.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(DefaultPromise.class);
 
-    private static final Object SUCCESS_SIGNAL = new Object();
+	private static final Object SUCCESS_SIGNAL = new Object();
 
-    private volatile Object result;
-    
-    /**
-     * Accessed only inside synchronized(this)
-     */
-    private final Map<IFutureListener, Executor> listeners = new HashMap<>();
-    private final ConcurrentMap<String, Object> attachments = new ConcurrentHashMap<>();
+	private volatile Object result;
 
-    /**
-     * The default executor to execute {@link IFutureListener#operationCompleted(IFuture)}
-     */
-    private final Executor defaultExecutor;
-    
-    public DefaultPromise() {
-        this(SynchronousExecutor.INSTANCE);
-    }
-    
-    public DefaultPromise(Executor executor) {
-        this.defaultExecutor = executor == null ? SynchronousExecutor.INSTANCE : executor;
-    }
-    
-    @Override
-    public Object get() throws InterruptedException, ExecutionException {
-        await();
-        Throwable cause = cause();
-        if (cause == null) {
-            return getNow();
-        }
-        throw new ExecutionException(cause);
-    }
+	/**
+	 * Accessed only inside synchronized(this)
+	 */
+	private final Map<IFutureListener<? extends IFuture<V>>, Executor> listeners = new HashMap<>();
+	private final ConcurrentMap<String, Object> attachments = new ConcurrentHashMap<>();
 
-    @Override
-    public Object get(long timeout, TimeUnit unit) throws InterruptedException,
-            ExecutionException, TimeoutException {
-        if (!await(timeout, unit)) {
-            throw new TimeoutException();
-        }
+	/**
+	 * The default executor to execute
+	 * {@link IFutureListener#operationCompleted(IFuture)}
+	 */
+	private final Executor defaultExecutor;
 
-        Throwable cause = cause();
-        if (cause == null) {
-            return getNow();
-        }
+	public DefaultPromise() {
+		this(SynchronousExecutor.INSTANCE);
+	}
 
-        throw new ExecutionException(cause);
-    }
+	public DefaultPromise(Executor executor) {
+		this.defaultExecutor = executor == null ? SynchronousExecutor.INSTANCE
+				: executor;
+	}
 
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        if (isDone()) {
-            return false;
-        }
+	@Override
+	public V get() throws InterruptedException, ExecutionException {
+		await();
+		Throwable cause = cause();
+		if (cause == null) {
+			return (V) getNow();
+		}
+		throw new ExecutionException(cause);
+	}
 
-        synchronized (this) {
-            if (isDone()) {
-                return false;
-            }
-            result = new CauseHolder(new CancellationException());
-            notifyAll();
-        }
-        notifyListeners();
-        return true;
-    }
+	@Override
+	public V get(long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
+		if (!await(timeout, unit)) {
+			throw new TimeoutException();
+		}
 
-    @Override
-    public boolean isCancelled() {
-        return result instanceof CauseHolder
-                && ((CauseHolder) result).cause instanceof CancellationException;
-    }
+		Throwable cause = cause();
+		if (cause == null) {
+			return (V) getNow();
+		}
 
-    @Override
-    public boolean isDone() {
-        return result != null;
-    }
+		throw new ExecutionException(cause);
+	}
 
-    @Override
-    public Object getNow() {
-        Object result = this.result;
-        if (result == SUCCESS_SIGNAL || result instanceof CauseHolder) {
-            return null;
-        }
-        return result;
-    }
+	@Override
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		if (isDone()) {
+			return false;
+		}
 
-    @Override
-    public boolean isSuccessful() {
-        Object result = this.result;
-        if (result == null) {
-            return false;
-        }
+		synchronized (this) {
+			if (isDone()) {
+				return false;
+			}
+			result = new CauseHolder(new CancellationException());
+			notifyAll();
+		}
+		notifyListeners();
+		return true;
+	}
 
-        return !(result instanceof CauseHolder);
-    }
+	@Override
+	public boolean isCancelled() {
+		return result instanceof CauseHolder
+				&& ((CauseHolder) result).cause instanceof CancellationException;
+	}
 
-    @Override
-    public Throwable cause() {
-        Object result = this.result;
-        if (result instanceof CauseHolder) {
-            return ((CauseHolder) result).cause;
-        }
-        return null;
-    }
+	@Override
+	public boolean isDone() {
+		return result != null;
+	}
 
-    @Override
-    public IFuture await() throws InterruptedException {
-        return await0(true);
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public V getNow() {
+		Object result = this.result;
+		if (result == SUCCESS_SIGNAL || result instanceof CauseHolder) {
+			return null;
+		}
+		return (V) result;
+	}
 
-    @Override
-    public IFuture awaitUninterruptibly() {
-        try {
-            return await0(false);
-        } catch (InterruptedException e) {
-            throw new Error(e);
-        }
-    }
+	@Override
+	public boolean isSuccessful() {
+		Object result = this.result;
+		if (result == null) {
+			return false;
+		}
 
-    @Override
-    public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
-        return await0(unit.toNanos(timeout), true);
-    }
+		return !(result instanceof CauseHolder);
+	}
 
-    @Override
-    public boolean awaitUninterruptibly(long timeout, TimeUnit unit) {
-        try {
-            return await0(unit.toNanos(timeout), false);
-        } catch (InterruptedException e) {
-            throw new Error(e);
-        }
-    }
+	@Override
+	public Throwable cause() {
+		Object result = this.result;
+		if (result instanceof CauseHolder) {
+			return ((CauseHolder) result).cause;
+		}
+		return null;
+	}
 
-    @Override
-    public IFuture addListener(IFutureListener listener) {
-        return addListener(listener, defaultExecutor);
-    }
+	@Override
+	public IPromise<V> await() throws InterruptedException {
+		return await0(true);
+	}
 
-    @Override
-    public IFuture addListener(IFutureListener listener, Executor executor) {
-        Objects.requireNonNull(listener, "listener");
-        Objects.requireNonNull(executor, "executor");
-        
-        if (isDone()) {
-            notifyListener(listener, executor);
-            return this;
-        }
+	@Override
+	public IPromise<V> awaitUninterruptibly() {
+		try {
+			return await0(false);
+		} catch (InterruptedException e) {
+			throw new Error(e);
+		}
+	}
 
-        synchronized (this) {
-            if (!isDone()) {
-                listeners.put(listener, executor);
-                return this;
-            }
-        }
+	@Override
+	public boolean await(long timeout, TimeUnit unit)
+			throws InterruptedException {
+		return await0(unit.toNanos(timeout), true);
+	}
 
-        notifyListener(listener, executor);
-        return this;
-    }
+	@Override
+	public boolean awaitUninterruptibly(long timeout, TimeUnit unit) {
+		try {
+			return await0(unit.toNanos(timeout), false);
+		} catch (InterruptedException e) {
+			throw new Error(e);
+		}
+	}
 
-    @Override
-    public IFuture removeListener(IFutureListener listener) {
-        synchronized (this) {
-            if (!isDone()) {
-                listeners.remove(listener);
-            }
-        }
-        return this;
-    }
+	@Override
+	public IPromise<V> addListener(
+			IFutureListener<? extends IFuture<V>> listener) {
+		return addListener(listener, defaultExecutor);
+	}
 
-    @Override
-    public Object getAttachment(String name) {
-        return attachments.get(name);
-    }
+	@Override
+	public IPromise<V> addListener(
+			IFutureListener<? extends IFuture<V>> listener, Executor executor) {
+		Objects.requireNonNull(listener, "listener");
+		Objects.requireNonNull(executor, "executor");
 
-    @Override
-    public Map<String, Object> getAttachments() {
-        return attachments;
-    }
-    
-    @Override
-    public void setAttachment(String name, Object value) {
-        attachments.put(name, value);
-    }
+		if (isDone()) {
+			notifyListener(listener, executor);
+			return this;
+		}
 
-    @Override
-    public IPromise setSuccess(Object result) {
-        if (setSuccess0(result)) {
-            notifyListeners();
-        }
-        return this;
-    }
+		synchronized (this) {
+			if (!isDone()) {
+				listeners.put(listener, executor);
+				return this;
+			}
+		}
 
-    @Override
-    public IPromise setFailure(Throwable cause) {
-        if (setFailure0(cause)) {
-            notifyListeners();
-        }
+		notifyListener(listener, executor);
+		return this;
+	}
 
-        return this;
-    }
+	@Override
+	public IPromise<V> removeListener(
+			IFutureListener<? extends IFuture<V>> listener) {
+		synchronized (this) {
+			if (!isDone()) {
+				listeners.remove(listener);
+			}
+		}
+		return this;
+	}
 
-    private boolean setFailure0(Throwable cause) {
-        if (isDone()) {
-            return false;
-        }
+	@Override
+	public Object getAttachment(String name) {
+		return attachments.get(name);
+	}
 
-        synchronized (this) {
-            if (isDone()) {
-                return false;
-            }
+	@Override
+	public Map<String, Object> getAttachments() {
+		return attachments;
+	}
 
-            result = new CauseHolder(cause);
-            notifyAll();
-        }
-        return true;
-    }
+	@Override
+	public IPromise<V> setAttachment(String name, Object value) {
+		attachments.put(name, value);
+		return this;
+	}
 
-    private boolean setSuccess0(Object result) {
-        if (isDone()) {
-            return false;
-        }
+	@Override
+	public IPromise<V> setSuccess(Object result) {
+		if (setSuccess0(result)) {
+			notifyListeners();
+		}
+		return this;
+	}
 
-        synchronized (this) {
-            if (isDone()) {
-                return false;
-            }
+	@Override
+	public IPromise<V> setFailure(Throwable cause) {
+		if (setFailure0(cause)) {
+			notifyListeners();
+		}
 
-            if (result == null) {
-                this.result = SUCCESS_SIGNAL;
-            } else {
-                this.result = result;
-            }
-            notifyAll();
-        }
-        return true;
-    }
+		return this;
+	}
 
-    private IFuture await0(boolean interruptable) throws InterruptedException {
-        if (isDone()) {
-            return this;
-        }
+	private boolean setFailure0(Throwable cause) {
+		if (isDone()) {
+			return false;
+		}
 
-        if (interruptable && Thread.interrupted()) {
-            throw new InterruptedException("thread had been interrupted");
-        }
+		synchronized (this) {
+			if (isDone()) {
+				return false;
+			}
 
-        boolean interrupted = false;
-        synchronized (this) {
-            while (!isDone()) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    if (interruptable) {
-                        throw e;
-                    } else {
-                        interrupted = true;
-                    }
-                }
-            }
-        }
+			result = new CauseHolder(cause);
+			notifyAll();
+		}
+		return true;
+	}
 
-        if (interrupted) {
-            Thread.currentThread().interrupt();
-        }
-        return this;
-    }
+	private boolean setSuccess0(Object result) {
+		if (isDone()) {
+			return false;
+		}
 
-    private boolean await0(long timeoutNanos, boolean interruptable)
-            throws InterruptedException {
-        if (isDone()) {
-            return true;
-        }
+		synchronized (this) {
+			if (isDone()) {
+				return false;
+			}
 
-        if (timeoutNanos <= 0) {
-            return isDone();
-        }
+			if (result == null) {
+				this.result = SUCCESS_SIGNAL;
+			} else {
+				this.result = result;
+			}
+			notifyAll();
+		}
+		return true;
+	}
 
-        if (interruptable && Thread.interrupted()) {
-            throw new InterruptedException("thread had been interrupted");
-        }
+	private IPromise<V> await0(boolean interruptable)
+			throws InterruptedException {
+		if (isDone()) {
+			return this;
+		}
 
-        long startTime = System.nanoTime();
-        long waitTime = timeoutNanos;
-        boolean interrupted = false;
+		if (interruptable && Thread.interrupted()) {
+			throw new InterruptedException("thread had been interrupted");
+		}
 
-        try {
-            synchronized (this) {
-                if (isDone()) {
-                    return true;
-                }
+		boolean interrupted = false;
+		synchronized (this) {
+			while (!isDone()) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					if (interruptable) {
+						throw e;
+					} else {
+						interrupted = true;
+					}
+				}
+			}
+		}
 
-                for (;;) {
-                    try {
-                        wait(waitTime / 1000000, (int) (waitTime % 1000000));
-                    } catch (InterruptedException e) {
-                        if (interruptable) {
-                            throw e;
-                        } else {
-                            interrupted = true;
-                        }
-                    }
+		if (interrupted) {
+			Thread.currentThread().interrupt();
+		}
+		return this;
+	}
 
-                    if (isDone()) {
-                        return true;
-                    } else {
-                        waitTime = timeoutNanos - (System.nanoTime() - startTime);
-                        if (waitTime <= 0) {
-                            return isDone();
-                        }
-                    }
-                }
-            }
-        } finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
+	private boolean await0(long timeoutNanos, boolean interruptable)
+			throws InterruptedException {
+		if (isDone()) {
+			return true;
+		}
 
-    private void notifyListener(IFutureListener listener, Executor executor) {
-        if (executor == SynchronousExecutor.INSTANCE) {
-            // No need to new runnable instance
-            try {
-                listener.operationCompleted(this);
-            } catch (Throwable t) {
-                logger.error(t.getMessage(), t);
-            }
-        } else {
-            executor.execute(new Runnable() {
+		if (timeoutNanos <= 0) {
+			return isDone();
+		}
 
-                @Override
-                public void run() {
-                    try {
-                        listener.operationCompleted(DefaultPromise.this);
-                    } catch (Throwable t) {
-                        logger.error(t.getMessage(), t);
-                    }
-                }
-            });
-        }
-    }
+		if (interruptable && Thread.interrupted()) {
+			throw new InterruptedException("thread had been interrupted");
+		}
 
-    private void notifyListeners() {
-        Map<IFutureListener, Executor> copy;
-        synchronized (this) {
-            copy = new HashMap<>(listeners);
-        }
-        
-        for (Entry<IFutureListener, Executor> entry : copy.entrySet()) {
-            notifyListener(entry.getKey(), entry.getValue());
-        }
-    }
+		long startTime = System.nanoTime();
+		long waitTime = timeoutNanos;
+		boolean interrupted = false;
 
-    protected final Executor defaultExecutor() {
-        return this.defaultExecutor;
-    }
-    
-    protected final Map<IFutureListener, Executor> listeners() {
-        return this.listeners;
-    }
-    
-    private static final class CauseHolder implements Serializable {
+		try {
+			synchronized (this) {
+				if (isDone()) {
+					return true;
+				}
 
-        private static final long serialVersionUID = 8712728693792003462L;
+				for (;;) {
+					try {
+						wait(waitTime / 1000000, (int) (waitTime % 1000000));
+					} catch (InterruptedException e) {
+						if (interruptable) {
+							throw e;
+						} else {
+							interrupted = true;
+						}
+					}
 
-        final Throwable cause;
+					if (isDone()) {
+						return true;
+					} else {
+						waitTime = timeoutNanos
+								- (System.nanoTime() - startTime);
+						if (waitTime <= 0) {
+							return isDone();
+						}
+					}
+				}
+			}
+		} finally {
+			if (interrupted) {
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
 
-        private CauseHolder(Throwable cause) {
-            this.cause = cause;
-        }
-    }
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void notifyListener(IFutureListener listener, Executor executor) {
+		if (executor == SynchronousExecutor.INSTANCE) {
+			// No need to new runnable instance
+			try {
+				listener.operationCompleted(this);
+			} catch (Throwable t) {
+				logger.error(t.getMessage(), t);
+			}
+		} else {
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						listener.operationCompleted(DefaultPromise.this);
+					} catch (Throwable t) {
+						logger.error(t.getMessage(), t);
+					}
+				}
+			});
+		}
+	}
+
+	private void notifyListeners() {
+		Map<IFutureListener<? extends IFuture<V>>, Executor> copy;
+		synchronized (this) {
+			copy = new HashMap<>(listeners);
+		}
+
+		for (Entry<IFutureListener<? extends IFuture<V>>, Executor> entry : copy
+				.entrySet()) {
+			notifyListener(entry.getKey(), entry.getValue());
+		}
+	}
+
+	protected final Executor defaultExecutor() {
+		return this.defaultExecutor;
+	}
+
+	protected final Map<IFutureListener<? extends IFuture<V>>, Executor> listeners() {
+		return this.listeners;
+	}
+
+	private static final class CauseHolder implements Serializable {
+
+		private static final long serialVersionUID = 8712728693792003462L;
+
+		final Throwable cause;
+
+		private CauseHolder(Throwable cause) {
+			this.cause = cause;
+		}
+	}
 }
