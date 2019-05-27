@@ -12,4 +12,8 @@ public interface ILifeCycle {
 	void start() throws LifeCycleException;
 	
 	void destroy() throws LifeCycleException;
+	
+	void addLifeCycleListener(ILifeCycleListener l);
+	
+	void removeLifeCycleListener(ILifeCycleListener l);
 }

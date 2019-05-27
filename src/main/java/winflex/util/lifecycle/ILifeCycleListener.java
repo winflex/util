@@ -7,7 +7,7 @@ import java.util.EventListener;
  * 
  * @author winflex
  */
-public interface LifeCycleListener extends EventListener {
+public interface ILifeCycleListener extends EventListener {
 	
 	void lifeCycleEvent(LifeCycleEvent e);
 }

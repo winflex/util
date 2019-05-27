@@ -18,7 +18,7 @@ public abstract class AbstractLifeCycle implements ILifeCycle {
 
 	protected final String name;
 	protected final boolean autoLogState;
-	private final List<LifeCycleListener> lifeCycleListeners = new ArrayList<LifeCycleListener>();
+	private final List<ILifeCycleListener> lifeCycleListeners = new ArrayList<ILifeCycleListener>();
 
 	protected volatile LifeCycleState state = NEW;
 
@@ -125,17 +125,19 @@ public abstract class AbstractLifeCycle implements ILifeCycle {
 		lifeCycleListeners.forEach((l) -> l.lifeCycleEvent(e));
 	}
 
-	public final void addLifeCycleListener(LifeCycleListener l) {
+	@Override
+	public final void addLifeCycleListener(ILifeCycleListener l) {
 		lifeCycleListeners.add(l);
 	}
 
-	public final void removeLifeCycleListener(LifeCycleListener l) {
+	@Override
+	public final void removeLifeCycleListener(ILifeCycleListener l) {
 		lifeCycleListeners.remove(l);
 	}
 
 	private static final Logger lifeCycleLogger = LoggerFactory.getLogger(LifeCycleLogger.class);
 
-	public class LifeCycleLogger implements LifeCycleListener {
+	public class LifeCycleLogger implements ILifeCycleListener {
 
 		@Override
 		public void lifeCycleEvent(LifeCycleEvent e) {
