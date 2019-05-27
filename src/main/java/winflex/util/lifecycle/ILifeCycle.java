@@ -1,13 +1,15 @@
 package winflex.util.lifecycle;
 
 /**
- * 简单生命周期定义
- * @author lixiaohui
- *
+ * 生命周期抽象
+ * 
+ * @author winflex
  */
-public interface LifeCycle {
+public interface ILifeCycle {
+	
 	void init() throws LifeCycleException;
+	
 	void start() throws LifeCycleException;
-	void restart() throws LifeCycleException;
+	
 	void destroy() throws LifeCycleException;
 }

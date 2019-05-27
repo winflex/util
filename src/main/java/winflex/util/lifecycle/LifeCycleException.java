@@ -1,5 +1,10 @@
 package winflex.util.lifecycle;
 
+/**
+ * 
+ * 
+ * @author winflex
+ */
 public class LifeCycleException extends Exception {
 
 	private static final long serialVersionUID = 3035381941405667208L;
@@ -19,5 +24,4 @@ public class LifeCycleException extends Exception {
 	public LifeCycleException(Throwable cause) {
 		super(cause);
 	}
-
 }
