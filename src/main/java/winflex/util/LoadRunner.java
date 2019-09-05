@@ -2,6 +2,8 @@ package winflex.util;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
@@ -117,6 +119,7 @@ public class LoadRunner {
 	}
 
 	final class Reporter {
+		private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		final Thread thread;
 		final LongAdder successCounter = new LongAdder();
 		final LongAdder failureCounter = new LongAdder();
@@ -146,13 +149,14 @@ public class LoadRunner {
 		private void run() {
 			final PrintStream out = new PrintStream(config.reportOutputStream);
 			final long interval = config.reportInterval;
+			final long intervalSecs = interval / 1000;
 			while (!stopped) {
 				sleepQuietly(interval);
 				long successCount = successCounter.sum();
 				long failureCount = failureCounter.sum();
-				long tps = successCount - lastCount;
+				long tps = (successCount - lastCount) / intervalSecs;
 
-				out.printf("tps = %10d, success = %10d, failure = %10d\n", tps, successCount, failureCount);
+				out.printf("[%s] tps = %10d, success = %10d, failure = %10d\n", format.format(new Date()), tps, successCount, failureCount);
 				lastCount = successCount;
 			}
 		}
@@ -239,6 +243,11 @@ public class LoadRunner {
 			config.reportInterval = reportInterval;
 			return this;
 		}
+		
+		public LoadRunnberBuilder reportOutputStream(OutputStream out) {
+			config.reportOutputStream = out;
+			return this;
+		}
 
 		public LoadRunnberBuilder threadFactory(ThreadFactory tf) {
 			config.threadFactory = tf;
@@ -265,7 +274,7 @@ public class LoadRunner {
 			}
 
 			if (transaction == null) {
-				throw new IllegalArgumentException("transsaction is required");
+				throw new IllegalArgumentException("transaction is required");
 			}
 
 			if (threadFactory == null) {
