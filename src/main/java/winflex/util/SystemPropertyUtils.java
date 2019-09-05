@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author winflex
  */
-public final class SystemPropertyUtil {
+public final class SystemPropertyUtils {
 
-	private static final Logger logger = LoggerFactory.getLogger(SystemPropertyUtil.class);
+	private static final Logger logger = LoggerFactory.getLogger(SystemPropertyUtils.class);
 
 	/**
 	 * Returns {@code true} if and only if the system property with the specified
@@ -160,7 +160,7 @@ public final class SystemPropertyUtil {
 		return def;
 	}
 
-	private SystemPropertyUtil() {
+	private SystemPropertyUtils() {
 		// Unused
 	}
 }

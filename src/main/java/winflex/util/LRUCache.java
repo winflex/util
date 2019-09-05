@@ -1,102 +1,61 @@
-/*
- * Copyright(C) 2013 Agree Corporation. All rights reserved.
- * 
- * Contributors:
- *     Agree Corporation - initial API and implementation
- */
 package winflex.util;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
+ * 
  *
  *
- * @author lixiaohui
- * @date 2017年4月10日 下午5:22:35
- * @version 1.0
- *
+ * @author winflex
  */
 public class LRUCache<K, V> {
 
-    private final ConcurrentMap<K, Entry> nodes;
+    private static final float hashTableLoadFactor = 0.75f;
 
-    private int cacheSize;
+    private final LinkedHashMap<K, V> map;
+    private volatile int maxCapacity;
 
-    // youngest
-    private Entry head;
+    public LRUCache(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+        int hashTableCapacity = (int) Math.ceil(maxCapacity / hashTableLoadFactor) + 1;
+        map = new LinkedHashMap<K, V>(hashTableCapacity, hashTableLoadFactor, true) {
+            private static final long serialVersionUID = 1;
 
-    // oldest
-    private Entry tail;
-
-    public LRUCache(int cacheSize) {
-        this.cacheSize = cacheSize;
-        this.nodes = new ConcurrentHashMap<K, Entry>(cacheSize);
-    }
-
-    public void put(K key, V value) {
-        Entry node = nodes.get(key);
-        if (node == null) {
-            node = new Entry();
-            if (nodes.size() == cacheSize) { // full, evict eldest node
-                nodes.remove(tail.key);
-                removeTail();
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > LRUCache.this.maxCapacity;
             }
-            nodes.put(key, node);
-        }
+        };
     }
 
-    Entry removeTail() {
-        final Entry oldTail = tail;
-        if (oldTail != null) {
-            if (oldTail.before != null) {
-                oldTail.before.after = null;
-            } else {
-                head = null;
-            }
-            tail = oldTail.before;
-        }
-        return oldTail;
+    public synchronized V get(K key) {
+        return map.get(key);
     }
 
-    public V get(K key) {
-        Entry node = nodes.get(key);
-        if (node == null) {
-            return null;
-        }
-        moveToHead(node);
-        return node.value;
+    public synchronized void put(K key, V value) {
+        map.put(key, value);
     }
 
-    private void moveToHead(Entry node) {
-        if (node == head)
-            return;
-        if (node.before != null)
-            node.before.after = node.after;
-        if (node.after != null)
-            node.after.before = node.before;
-        if (tail == node)
-            tail = node.before;
-        if (head != null) {
-            node.after = head;
-            head.before = node;
-        }
-        head = node;
-        node.before = null;
-        if (tail == null)
-            tail = head;
+    public synchronized void clear() {
+        map.clear();
     }
 
-    public void clear() {
-        head = null;
-        tail = null;
-        nodes.clear();
+    public synchronized int usedEntries() {
+        return map.size();
     }
 
-    private class Entry {
-        Entry before;
-        Entry after;
-        K key;
-        V value;
+    public synchronized Collection<Map.Entry<K, V>> getAll() {
+        return new ArrayList<Map.Entry<K, V>>(map.entrySet());
+    }
+    
+    public int getMaxCapacity() {
+        return maxCapacity;
+    }
+
+    public void setMaxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
     }
 }
